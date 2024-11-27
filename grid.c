@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include "grid.h"
 
 int **allocate_grid(int n, int m) {
@@ -39,14 +40,11 @@ void evolve(int **current, int **next, int n, int m) {
     }
 }
 
-
-// Calcula o próximo estado da matriz
 void next_generation(int **matrix, int **new_matrix, int n, int m) {
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < m; j++) {
             int live_neighbors = count_neighbors(matrix, i, j, n, m);
 
-            // Aplica as regras do Jogo da Vida
             if (matrix[i][j] == ALIVE) {
                 new_matrix[i][j] = (live_neighbors < 2 || live_neighbors > 3) ? DEAD : ALIVE;
             } else {
@@ -62,5 +60,14 @@ void print_grid(int **grid, int n, int m) {
             printf("%d ", grid[i][j]);
         }
         printf("\n");
+    }
+}
+
+// Copia o conteúdo de uma matriz para outra
+void copy_grid(int **dest, int **src, int n, int m) {
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < m; j++) {
+            dest[i][j] = src[i][j];
+        }
     }
 }
