@@ -6,16 +6,6 @@
 #include "perturbation.h"
 #include "simulated_annealing.h"
 
-// Função para contar o número de células vivas em uma matriz
-int count_live_cells(int **grid, int n, int m) {
-    int count = 0;
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < m; j++) {
-            count += grid[i][j];
-        }
-    }
-    return count;
-}
 
 int main() {
     int n, m;

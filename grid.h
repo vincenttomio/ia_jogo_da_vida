@@ -11,6 +11,6 @@ void evolve(int **current, int **next, int n, int m);
 void next_generation(int **matrix, int **new_matrix, int n, int m); // Nova função
 void print_grid(int **grid, int n, int m); // Nova função de impressão
 void copy_grid(int **dest, int **src, int n, int m);
-
+int count_live_cells(int **grid, int n, int m);
 
 #endif
