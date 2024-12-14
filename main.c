@@ -1,93 +1,82 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <math.h>
 #include <time.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+
 #include "grid.h"
 #include "cost.h"
+#include "log_utils.h"
 #include "perturbation.h"
 #include "simulated_annealing.h"
+#include "matrix_splitter.h"
 
 
-int main() {
+int main(int argc, char *argv[]) {
+    // Medição de tempo de início
+    struct timeval start, end;
+    gettimeofday(&start, NULL);
+
+    // Medição de uso de memória inicial
+    struct rusage usage_start, usage_end;
+    getrusage(RUSAGE_SELF, &usage_start);
+
+    init_log("debug.log");
+    puts("Iniciando log, acesse depois informações detalhadas no arquivo: debug.log\n");
+
+
+    // Leitura de entrada
     int n, m;
-
-    puts("Lendo matriz de entrada");
+    log_message("Lendo matriz de entrada");
     scanf("%d %d", &n, &m);
-
+    
+    // Alocação de memória
     int **current_position = allocate_grid(n, m);
-    int **prev_position = allocate_grid(n, m);
-    int **check_position = allocate_grid(n, m); // Matriz para verificar o estado evoluído
-    int **best_prev_position = allocate_grid(n, m); // Melhor estado anterior encontrado
 
+
+    // Leitura da matriz de entrada
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < m; j++) {
             scanf("%d", &current_position[i][j]);
         }
     }
 
-    printf("Imprimindo matriz de entrada:\n");
+    printf("\nImprimindo matriz de entrada:\n");
     print_grid(current_position, n, m);
 
-    double max_iter = 10000000;
-    double initial_temp = 1000000.0;
-    double cooling_rate = 0.9995;
-    int max_trials = 10; // Número máximo de iterações para tentar encontrar o melhor estado
-    int min_live_cells = n * m; // Inicializa com o máximo possível de células vivas
+    analyze_and_split_matrix(current_position, n, m);
+    int **previous_state = solve_divided_matrix(current_position, n, m);
 
-    srand(time(NULL));
 
-    for (int trial = 1; trial <= max_trials; trial++) {
-        printf("\n--- Tentativa %d ---\n", trial);
+    printf("\nImprimindo matriz de estado anterior:\n");
+    print_grid(previous_state, n, m);
+  
 
-        // Encontra um possível estado anterior
-        simulated_annealing(prev_position, current_position, n, m, max_iter, initial_temp, cooling_rate);
+    // Medição de tempo final
+    gettimeofday(&end, NULL);
+    double time_taken = (end.tv_sec - start.tv_sec) + 
+                        (end.tv_usec - start.tv_usec) / 1000000.0;
 
-        // Gera o próximo estado a partir do estado anterior encontrado
-        next_generation(prev_position, check_position, n, m);
+    // Medição de uso de memória final
+    getrusage(RUSAGE_SELF, &usage_end);
+    long memory_used = usage_end.ru_maxrss; // Uso de memória em KB
 
-        printf("Estado anterior encontrado:\n");
-        print_grid(prev_position, n, m);
+    // Imprimir estatísticas
+    printf("\n--- Estatísticas de Execução ---\n");
+    printf("Tempo total de execução: %.4f segundos\n", time_taken);
+    printf("Memória máxima utilizada: %ld KB (%.2f MB)\n", 
+           memory_used, memory_used / 1024.0);
 
-        printf("Estado posterior ao anterior encontrado:\n");
-        print_grid(check_position, n, m);
+    // Loggin info
+    log_message("\n--- Estatísticas de Execução ---\n");
+    log_message("Tempo total de execução: %.4f segundos\n", time_taken);
+    log_message("Memória máxima utilizada: %ld KB (%.2f MB)\n", 
+           memory_used, memory_used / 1024.0);
 
-        // Verifica se o estado gerado é igual ao estado atual
-        int is_valid = 1;
-        for (int i = 0; i < n && is_valid; i++) {
-            for (int j = 0; j < m; j++) {
-                if (check_position[i][j] != current_position[i][j]) {
-                    is_valid = 0;
-                    break;
-                }
-            }
-        }
 
-        if (is_valid) {
-            printf("O estado anterior encontrado é válido.\n");
-
-            // Conta o número de células vivas no estado anterior
-            int live_cells = count_live_cells(prev_position, n, m);
-            printf("Número de células vivas no estado anterior: %d\n", live_cells);
-
-            // Atualiza o melhor estado anterior se for válido e tiver menos células vivas
-            if (live_cells < min_live_cells) {
-                min_live_cells = live_cells;
-                copy_grid(best_prev_position, prev_position, n, m);
-                printf("Novo melhor estado encontrado!\n");
-            }
-        } else {
-            printf("O estado anterior encontrado não evolui para o estado atual corretamente.\n");
-        }
-    }
-
-    printf("\n--- Melhor estado anterior encontrado ---\n");
-    print_grid(best_prev_position, n, m);
-    printf("Número de células vivas no melhor estado: %d\n", min_live_cells);
-
-    // Liberar memória
-    free_grid(prev_position, n);
-    free_grid(current_position, n);
-    free_grid(check_position, n);
-    free_grid(best_prev_position, n);
-
+    close_log();
     return 0;
 }
+
