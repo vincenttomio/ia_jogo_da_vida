@@ -1,6 +1,6 @@
 # Jogo da Vida - Reversão de Estados
 
-Jogo feito para a matéria de - Inteligência Artificial - 2024-2 (CI1209)
+Projeto feito para a matéria de - Inteligência Artificial - 2024-2 (CI1209)
 
 ### Integrantes: 
 
